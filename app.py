@@ -428,12 +428,14 @@ genre_category_keywords = {
         "supernatural",
         "urban fantasy"
     ],
-
-    "💘 Romance": [
-        "romance",
-        "love",
-        "new adult"
-    ],
+    
+   "💘 Romance": [
+    "romance",
+    "contemporary romance",
+    "historical romance",
+    "paranormal romance",
+    "new adult"
+   ],
 
     "🔍 Mystery & Thriller": [
         "mystery",
@@ -866,14 +868,6 @@ if selected_genres:
         filtered_df,
         selected_genres
     )
-
-elif selected_genre_category != "All Books":
-
-    filtered_df = filter_by_genre(
-        filtered_df,
-        genre_categories[selected_genre_category]
-    )
-
 
 if filtered_df.empty:
 
