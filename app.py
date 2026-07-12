@@ -1,4 +1,5 @@
 import html
+import os
 
 import numpy as np
 import pandas as pd
@@ -19,10 +20,10 @@ st.set_page_config(
 
 
 # =========================================================
-# DARK ACADEMIA DESIGN
+# CSS DESIGN
 # =========================================================
 
-st.html(
+st.markdown(
     """
     <style>
 
@@ -310,7 +311,8 @@ st.html(
     }
 
     </style>
-    """
+    """,
+    unsafe_allow_html=True
 )
 
 
@@ -321,7 +323,17 @@ st.html(
 @st.cache_data
 def load_data():
 
-    data = pd.read_csv("clean_goodreads_books.csv")
+    file_path = "clean_goodreads_books.csv"
+
+    if not os.path.exists(file_path):
+        st.error("CSV file was not found. Make sure clean_goodreads_books.csv is in the GitHub repository.")
+        st.stop()
+
+    if os.path.getsize(file_path) == 0:
+        st.error("CSV file exists but is empty. Re-upload the correct clean_goodreads_books.csv file.")
+        st.stop()
+
+    data = pd.read_csv(file_path)
 
     numeric_columns = [
         "average_rating",
@@ -379,7 +391,7 @@ if missing_columns:
 
 
 # =========================================================
-# CLEAN GENRE OPTIONS FOR SIDEBAR
+# CLEAN GENRE OPTIONS
 # =========================================================
 
 genre_counts = (
@@ -414,9 +426,6 @@ clean_genres_for_sidebar = [
 ]
 
 
-# These are broad, readable categories for the sidebar.
-# Each category only uses real genres that exist in the dataset.
-
 genre_category_keywords = {
 
     "✨ Fantasy & Speculative": [
@@ -428,14 +437,14 @@ genre_category_keywords = {
         "supernatural",
         "urban fantasy"
     ],
-    
-   "💘 Romance": [
-    "romance",
-    "contemporary romance",
-    "historical romance",
-    "paranormal romance",
-    "new adult"
-   ],
+
+    "💘 Romance": [
+        "romance",
+        "contemporary romance",
+        "historical romance",
+        "paranormal romance",
+        "new adult"
+    ],
 
     "🔍 Mystery & Thriller": [
         "mystery",
@@ -496,7 +505,6 @@ genre_category_keywords = {
 
 
 genre_category_min_counts = {
-
     "✨ Fantasy & Speculative": 200,
     "💘 Romance": 500,
     "🔍 Mystery & Thriller": 150,
@@ -505,7 +513,6 @@ genre_category_min_counts = {
     "🏛️ Classics & Literature": 150,
     "🧠 Nonfiction & Ideas": 120,
     "🎨 Lifestyle & Culture": 60
-
 }
 
 
@@ -514,7 +521,6 @@ genre_categories = {}
 for category, keywords in genre_category_keywords.items():
 
     min_count = genre_category_min_counts[category]
-
     matching_genres = []
 
     for genre in clean_genres_for_sidebar:
@@ -605,10 +611,14 @@ def category_badge(category):
 
     safe_name = html.escape(str(display_name))
 
-    return (
-        f'<span class="badge {css_class}">'
-        f'{safe_name}'
-        f'</span>'
+    return f'<span class="badge {css_class}">{safe_name}</span>'
+
+
+def render_html(html_code):
+
+    st.markdown(
+        html_code,
+        unsafe_allow_html=True
     )
 
 
@@ -624,16 +634,11 @@ def show_book_card(book):
         f'📝 {format_number(book["review_count"])} reviews'
     ]
 
-    engagement_text = " &nbsp; · &nbsp; ".join(
-        engagement_details
-    )
+    engagement_text = " &nbsp; · &nbsp; ".join(engagement_details)
 
     extra_details = []
 
-    if (
-        pd.notna(book["number_of_pages"])
-        and book["number_of_pages"] > 0
-    ):
+    if pd.notna(book["number_of_pages"]) and book["number_of_pages"] > 0:
         extra_details.append(
             f'📖 {int(book["number_of_pages"]):,} pages'
         )
@@ -645,41 +650,23 @@ def show_book_card(book):
 
     extra_text = " &nbsp; · &nbsp; ".join(extra_details)
 
-    card_html = f"""
-    <div class="book-card">
-
-        <div class="book-title">
-            {safe_title}
-        </div>
-
-        <div class="book-author">
-            by {safe_author}
-        </div>
-
-        {category_badge(book["book_category"])}
-
-        <div class="book-meta">
-
-            {engagement_text}
-
-            <br>
-
-            📚 {safe_genres}
-    """
+    card_html = (
+        '<div class="book-card">'
+        f'<div class="book-title">{safe_title}</div>'
+        f'<div class="book-author">by {safe_author}</div>'
+        f'{category_badge(book["book_category"])}'
+        '<div class="book-meta">'
+        f'{engagement_text}'
+        '<br>'
+        f'📚 {safe_genres}'
+    )
 
     if extra_text:
-        card_html += f"""
-            <br>
-            {extra_text}
-        """
+        card_html += f'<br>{extra_text}'
 
-    card_html += """
-        </div>
+    card_html += '</div></div>'
 
-    </div>
-    """
-
-    st.html(card_html)
+    render_html(card_html)
 
 
 def style_plotly(fig):
@@ -750,14 +737,9 @@ if st.session_state["last_genre_section"] != selected_genre_category:
 
 
 if selected_genre_category == "All Books":
-
     available_genres = all_genres
-
 else:
-
-    available_genres = genre_categories[
-        selected_genre_category
-    ]
+    available_genres = genre_categories[selected_genre_category]
 
 
 selected_genres = st.sidebar.multiselect(
@@ -862,12 +844,17 @@ if year_range is not None:
     ]
 
 
+# Important:
+# Category selection only changes dropdown options.
+# The dashboard filters only after choosing a specific genre.
+
 if selected_genres:
 
     filtered_df = filter_by_genre(
         filtered_df,
         selected_genres
     )
+
 
 if filtered_df.empty:
 
@@ -887,31 +874,17 @@ if filtered_df.empty:
 # HERO
 # =========================================================
 
-st.html(
-    """
-    <div class="hero-box">
-
-        <div class="hero-decoration">
-            ✦
-        </div>
-
-        <div class="hero-small">
-            A Goodreads Data Exploration Project
-        </div>
-
-        <div class="hero-title">
-            Between the Lines
-        </div>
-
-        <div class="hero-subtitle">
-            Step into a digital library of more than
-            49,000 books. Explore how readers rate books,
-            how popularity shapes perception, and which
-            titles deserve more attention than they receive.
-        </div>
-
-    </div>
-    """
+render_html(
+    '<div class="hero-box">'
+    '<div class="hero-decoration">✦</div>'
+    '<div class="hero-small">A Goodreads Data Exploration Project</div>'
+    '<div class="hero-title">Between the Lines</div>'
+    '<div class="hero-subtitle">'
+    'Step into a digital library of more than 49,000 books. '
+    'Explore how readers rate books, how popularity shapes perception, '
+    'and which titles deserve more attention than they receive.'
+    '</div>'
+    '</div>'
 )
 
 
@@ -983,16 +956,9 @@ st.write("")
 
 with library_tab:
 
-    st.html(
-        """
-        <div class="section-label">
-            The Collection
-        </div>
-
-        <div class="section-title">
-            A Look Inside the Library
-        </div>
-        """
+    render_html(
+        '<div class="section-label">The Collection</div>'
+        '<div class="section-title">A Look Inside the Library</div>'
     )
 
     left_col, right_col = st.columns(
@@ -1053,21 +1019,13 @@ with library_tab:
             use_container_width=True
         )
 
-    st.html(
-        """
-        <div class="insight-box">
-
-            <div class="insight-title">
-                What stands out
-            </div>
-
-            Most books are rated close to four stars.
-            Very low average ratings are relatively rare,
-            showing that Goodreads scores are concentrated
-            within a fairly high range.
-
-        </div>
-        """
+    render_html(
+        '<div class="insight-box">'
+        '<div class="insight-title">What stands out</div>'
+        'Most books are rated close to four stars. '
+        'Very low average ratings are relatively rare, '
+        'showing that Goodreads scores are concentrated within a fairly high range.'
+        '</div>'
     )
 
     st.markdown("### 📚 The Most Common Genres")
@@ -1114,16 +1072,9 @@ with library_tab:
 
 with patterns_tab:
 
-    st.html(
-        """
-        <div class="section-label">
-            Exploratory Data Analysis
-        </div>
-
-        <div class="section-title">
-            Reading Patterns
-        </div>
-        """
+    render_html(
+        '<div class="section-label">Exploratory Data Analysis</div>'
+        '<div class="section-title">Reading Patterns</div>'
     )
 
     st.markdown("### Does popularity really mean quality?")
@@ -1132,9 +1083,9 @@ with patterns_tab:
         filtered_df["rating_count"] > 0
     ].copy()
 
-    if len(scatter_df) > 7000:
+    if len(scatter_df) > 5000:
         scatter_df = scatter_df.sample(
-            7000,
+            5000,
             random_state=42
         )
 
@@ -1163,21 +1114,13 @@ with patterns_tab:
         use_container_width=True
     )
 
-    st.html(
-        """
-        <div class="insight-box">
-
-            <div class="insight-title">
-                What the data suggests
-            </div>
-
-            Popularity does not guarantee a higher rating.
-            Less popular books show a wider range of reader
-            opinions, while highly popular books tend to settle
-            into a more stable rating range.
-
-        </div>
-        """
+    render_html(
+        '<div class="insight-box">'
+        '<div class="insight-title">What the data suggests</div>'
+        'Popularity does not guarantee a higher rating. '
+        'Less popular books show a wider range of reader opinions, '
+        'while highly popular books tend to settle into a more stable rating range.'
+        '</div>'
     )
 
     st.markdown("### How do the most common genres compare?")
@@ -1242,20 +1185,12 @@ with patterns_tab:
         use_container_width=True
     )
 
-    st.html(
-        """
-        <div class="insight-box">
-
-            <div class="insight-title">
-                Genre insight
-            </div>
-
-            The most common genres have very similar
-            average ratings. Genre appears to make only
-            a small difference in overall reader scores.
-
-        </div>
-        """
+    render_html(
+        '<div class="insight-box">'
+        '<div class="insight-title">Genre insight</div>'
+        'The most common genres have very similar average ratings. '
+        'Genre appears to make only a small difference in overall reader scores.'
+        '</div>'
     )
 
     st.markdown("### Does book length affect rating?")
@@ -1270,9 +1205,9 @@ with patterns_tab:
         pages_df["number_of_pages"] > 0
     ]
 
-    if len(pages_df) > 7000:
+    if len(pages_df) > 5000:
         pages_df = pages_df.sample(
-            7000,
+            5000,
             random_state=42
         )
 
@@ -1320,16 +1255,9 @@ with patterns_tab:
 
 with discover_tab:
 
-    st.html(
-        """
-        <div class="section-label">
-            Book Discovery
-        </div>
-
-        <div class="section-title">
-            Hidden Shelves
-        </div>
-        """
+    render_html(
+        '<div class="section-label">Book Discovery</div>'
+        '<div class="section-title">Hidden Shelves</div>'
     )
 
     (
@@ -1464,16 +1392,9 @@ with discover_tab:
 
 with explorer_tab:
 
-    st.html(
-        """
-        <div class="section-label">
-            Search the Collection
-        </div>
-
-        <div class="section-title">
-            Browse the Collection
-        </div>
-        """
+    render_html(
+        '<div class="section-label">Search the Collection</div>'
+        '<div class="section-title">Browse the Collection</div>'
     )
 
     search_term = st.text_input(
@@ -1537,7 +1458,7 @@ with explorer_tab:
     ]
 
     st.dataframe(
-        explorer_df[display_columns],
+        explorer_df[display_columns].head(1000),
         use_container_width=True,
         hide_index=True
     )
@@ -1561,24 +1482,14 @@ with explorer_tab:
 
 with method_tab:
 
-    st.html(
-        """
-        <div class="section-label">
-            Behind the Dashboard
-        </div>
-
-        <div class="section-title">
-            The Method
-        </div>
-
-        <div class="section-description">
-            The book categories are based on rating and
-            popularity percentiles calculated from the
-            cleaned dataset. This keeps the rules connected
-            to the actual data instead of using arbitrary
-            fixed thresholds.
-        </div>
-        """
+    render_html(
+        '<div class="section-label">Behind the Dashboard</div>'
+        '<div class="section-title">The Method</div>'
+        '<div class="section-description">'
+        'The book categories are based on rating and popularity percentiles '
+        'calculated from the cleaned dataset. This keeps the rules connected '
+        'to the actual data instead of using arbitrary fixed thresholds.'
+        '</div>'
     )
 
     high_rating = df["average_rating"].quantile(0.75)
@@ -1680,22 +1591,16 @@ with method_tab:
 
 st.divider()
 
-st.html(
-    """
-    <div style="
-        text-align: center;
-        color: #9f8b74;
-        font-size: 0.85rem;
-        padding: 1.5rem;
-        letter-spacing: 0.04rem;
-    ">
-
-        🕯️ Between the Lines
-
-        <br>
-
-        Goodreads Data Exploration Project
-
-    </div>
-    """
+render_html(
+    '<div style="'
+    'text-align: center;'
+    'color: #9f8b74;'
+    'font-size: 0.85rem;'
+    'padding: 1.5rem;'
+    'letter-spacing: 0.04rem;'
+    '">'
+    '🕯️ Between the Lines'
+    '<br>'
+    'Goodreads Data Exploration Project'
+    '</div>'
 )
