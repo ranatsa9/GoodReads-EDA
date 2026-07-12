@@ -1,40 +1,104 @@
 import streamlit as st
 import pandas as pd
-import os
 
 st.set_page_config(
-    page_title="Goodreads Test",
+    page_title="Between the Lines",
     page_icon="📚",
     layout="wide"
 )
 
-st.title("📚 Goodreads App Test")
+st.title("📚 Between the Lines")
+st.write("Goodreads Data Exploration Dashboard")
 
-file_path = "clean_goodreads_books.csv"
+df = pd.read_csv("clean_goodreads_books.csv")
 
-st.write("Checking files...")
+numeric_columns = [
+    "average_rating",
+    "rating_count",
+    "review_count",
+    "number_of_pages",
+    "publication_year"
+]
 
-st.write("Current files in repo:")
-st.write(os.listdir())
+for column in numeric_columns:
+    df[column] = pd.to_numeric(df[column], errors="coerce")
 
-if not os.path.exists(file_path):
-    st.error("CSV file was not found.")
-    st.stop()
+df["title"] = df["title"].fillna("Unknown Title")
+df["author"] = df["author"].fillna("Unknown Author")
+df["genres"] = df["genres"].fillna("Unknown")
 
-st.write("CSV file found.")
+st.sidebar.title("Filters")
 
-file_size = os.path.getsize(file_path)
-st.write("CSV file size:", file_size)
+category_options = sorted(df["book_category"].dropna().unique())
 
-df = pd.read_csv(file_path)
+selected_categories = st.sidebar.multiselect(
+    "Book Categories",
+    options=category_options,
+    default=category_options
+)
 
-st.success("CSV loaded successfully!")
+rating_range = st.sidebar.slider(
+    "Average Rating",
+    min_value=float(df["average_rating"].min()),
+    max_value=float(df["average_rating"].max()),
+    value=(
+        float(df["average_rating"].min()),
+        float(df["average_rating"].max())
+    ),
+    step=0.1
+)
 
-st.write("Dataset shape:")
-st.write(df.shape)
+filtered_df = df.copy()
 
-st.write("Columns:")
-st.write(df.columns.tolist())
+filtered_df = filtered_df[
+    filtered_df["book_category"].isin(selected_categories)
+]
 
-st.write("Preview:")
-st.dataframe(df.head())
+filtered_df = filtered_df[
+    filtered_df["average_rating"].between(
+        rating_range[0],
+        rating_range[1]
+    )
+]
+
+st.subheader("Dataset Overview")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.metric("Books", f"{len(filtered_df):,}")
+
+with col2:
+    st.metric("Average Rating", f"{filtered_df['average_rating'].mean():.2f}")
+
+with col3:
+    st.metric("Hidden Gems", f"{(filtered_df['book_category'] == 'Hidden Gem').sum():,}")
+
+st.subheader("Book Categories")
+
+category_counts = filtered_df["book_category"].value_counts()
+
+st.bar_chart(category_counts)
+
+st.subheader("Average Rating Distribution")
+
+rating_counts = filtered_df["average_rating"].round(1).value_counts().sort_index()
+
+st.bar_chart(rating_counts)
+
+st.subheader("Preview")
+
+st.dataframe(
+    filtered_df[
+        [
+            "title",
+            "author",
+            "average_rating",
+            "rating_count",
+            "genres",
+            "publication_year",
+            "book_category"
+        ]
+    ].head(100),
+    use_container_width=True
+)
