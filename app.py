@@ -498,7 +498,7 @@ genre_category_keywords = {
 genre_category_min_counts = {
 
     "✨ Fantasy & Speculative": 200,
-    "💘 Romance": 200,
+    "💘 Romance": 500,
     "🔍 Mystery & Thriller": 150,
     "👻 Horror & Dark Fiction": 80,
     "🌱 Young Readers": 150,
