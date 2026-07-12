@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
 
 st.set_page_config(
     page_title="Between the Lines",
@@ -8,7 +9,7 @@ st.set_page_config(
 )
 
 st.title("📚 Between the Lines")
-st.write("Testing filters only — no charts yet.")
+st.write("Testing filters with Matplotlib charts.")
 
 df = pd.read_csv("clean_goodreads_books.csv")
 
@@ -45,8 +46,40 @@ filtered_df = df[
 
 st.success("App loaded successfully.")
 
-st.write("Original dataset shape:", df.shape)
-st.write("Filtered dataset shape:", filtered_df.shape)
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.metric("Books", f"{len(filtered_df):,}")
+
+with col2:
+    st.metric("Average Rating", f"{filtered_df['average_rating'].mean():.2f}")
+
+with col3:
+    st.metric(
+        "Hidden Gems",
+        f"{(filtered_df['book_category'] == 'Hidden Gem').sum():,}"
+    )
+
+st.subheader("Book Categories")
+
+category_counts = filtered_df["book_category"].value_counts()
+
+fig, ax = plt.subplots(figsize=(8, 4))
+category_counts.plot(kind="bar", ax=ax)
+ax.set_title("Books by Category")
+ax.set_xlabel("Category")
+ax.set_ylabel("Number of Books")
+plt.xticks(rotation=30)
+st.pyplot(fig)
+
+st.subheader("Average Rating Distribution")
+
+fig, ax = plt.subplots(figsize=(8, 4))
+ax.hist(filtered_df["average_rating"].dropna(), bins=20, edgecolor="black")
+ax.set_title("Distribution of Average Ratings")
+ax.set_xlabel("Average Rating")
+ax.set_ylabel("Number of Books")
+st.pyplot(fig)
 
 st.subheader("Preview")
 
@@ -61,6 +94,6 @@ st.dataframe(
             "publication_year",
             "book_category"
         ]
-    ].head(50),
+    ].head(100),
     use_container_width=True
 )
