@@ -475,7 +475,7 @@ st.sidebar.write(
 
 st.sidebar.divider()
 
-page = st.sidebar.radio(
+page = st.sidebar.selectbox(
     "Dashboard Page",
     [
         "🏠 Home",
