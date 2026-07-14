@@ -473,25 +473,7 @@ st.sidebar.write(
     """
 )
 
-st.sidebar.divider()
 
-page = st.sidebar.selectbox(
-    "Dashboard Page",
-    [
-        "🏠 Home",
-        "🏛️ Library Overview",
-        "📊 Reading Patterns",
-        "💎 Hidden Shelves",
-        "🔍 Find Your Next Read",
-        "⚖️ Compare Genres",
-        "🏆 Hall of Fame",
-        "🎲 Surprise Me",
-        "📈 Reading Trends",
-        "🤖 Predict Popularity",
-        "🔎 Browse Books",
-        "🕯️ Method"
-    ]
-)
 
 st.sidebar.divider()
 st.sidebar.subheader("🔎 Filter the Library")
@@ -593,7 +575,27 @@ render_html(
     '</div>'
     '</div>'
 )
+page = st.radio(
+    "Dashboard Page",
+    [
+        "🏠 Home",
+        "🏛️ Library Overview",
+        "📊 Reading Patterns",
+        "💎 Hidden Shelves",
+        "🔍 Find Your Next Read",
+        "⚖️ Compare Genres",
+        "🏆 Hall of Fame",
+        "🎲 Surprise Me",
+        "📈 Reading Trends",
+        "🤖 Predict Popularity",
+        "🔎 Browse Books",
+        "🕯️ Method"
+    ],
+    horizontal=True,
+    label_visibility="collapsed"
+)
 
+st.divider()
 
 # =========================================================
 # MAIN METRICS
