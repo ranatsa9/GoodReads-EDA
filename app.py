@@ -409,7 +409,11 @@ genre_counts = (
 
 all_genres = sorted(genre_counts[genre_counts >= 120].index)
 
-genres_to_remove = {"LGBT"}
+genres_to_remove = {
+    "LGBT",
+    "Romance-Erotic Romance",
+    "Romance-M M Romance"
+}
 
 all_genres = [
     genre for genre in all_genres
