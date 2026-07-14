@@ -474,7 +474,6 @@ st.sidebar.write(
 )
 
 
-
 st.sidebar.divider()
 st.sidebar.subheader("🔎 Filter the Library")
 
@@ -575,27 +574,7 @@ render_html(
     '</div>'
     '</div>'
 )
-page = st.radio(
-    "Dashboard Page",
-    [
-        "🏠 Home",
-        "🏛️ Library Overview",
-        "📊 Reading Patterns",
-        "💎 Hidden Shelves",
-        "🔍 Find Your Next Read",
-        "⚖️ Compare Genres",
-        "🏆 Hall of Fame",
-        "🎲 Surprise Me",
-        "📈 Reading Trends",
-        "🤖 Predict Popularity",
-        "🔎 Browse Books",
-        "🕯️ Method"
-    ],
-    horizontal=True,
-    label_visibility="collapsed"
-)
 
-st.divider()
 
 # =========================================================
 # MAIN METRICS
@@ -619,11 +598,37 @@ with m4:
 st.write("")
 
 
+
+# =========================================================
+# MAIN TABS
+# =========================================================
+
+(
+    home_tab,
+    library_tab,
+    patterns_tab,
+    discover_tab,
+    tools_tab,
+    browse_tab,
+    method_tab
+) = st.tabs(
+    [
+        "🏠 Home",
+        "🏛️ The Library",
+        "📊 Reading Patterns",
+        "💎 Hidden Shelves",
+        "✨ Discovery Tools",
+        "🔎 Browse",
+        "🕯️ Method"
+    ]
+)
+
+
 # =========================================================
 # HOME
 # =========================================================
 
-if page == "🏠 Home":
+with home_tab:
     render_html(
         '<div class="section-label">Welcome</div>'
         '<div class="section-title">Your Goodreads Library at a Glance</div>'
@@ -672,12 +677,11 @@ if page == "🏠 Home":
         '</div>'
     )
 
-
 # =========================================================
 # LIBRARY OVERVIEW
 # =========================================================
 
-elif page == "🏛️ Library Overview":
+with library_tab:
     render_html(
         '<div class="section-label">The Collection</div>'
         '<div class="section-title">A Look Inside the Library</div>'
@@ -740,12 +744,11 @@ elif page == "🏛️ Library Overview":
     fig.update_layout(yaxis=dict(categoryorder="total ascending"))
     st.plotly_chart(style_plotly(fig), use_container_width=True)
 
-
 # =========================================================
 # READING PATTERNS
 # =========================================================
 
-elif page == "📊 Reading Patterns":
+with patterns_tab:
     render_html(
         '<div class="section-label">Exploratory Data Analysis</div>'
         '<div class="section-title">Reading Patterns</div>'
@@ -807,12 +810,11 @@ elif page == "📊 Reading Patterns":
         '</div>'
     )
 
-
 # =========================================================
 # HIDDEN SHELVES
 # =========================================================
 
-elif page == "💎 Hidden Shelves":
+with discover_tab:
     render_html(
         '<div class="section-label">Book Discovery</div>'
         '<div class="section-title">Hidden Shelves</div>'
@@ -857,292 +859,309 @@ elif page == "💎 Hidden Shelves":
         for _, book in selected_df.head(number_to_show).iterrows():
             show_book_card(book)
 
-
 # =========================================================
-# FIND YOUR NEXT READ
+# DISCOVERY TOOLS
 # =========================================================
 
-elif page == "🔍 Find Your Next Read":
-    render_html(
-        '<div class="section-label">Recommendation Explorer</div>'
-        '<div class="section-title">Find Your Next Read</div>'
+with tools_tab:
+
+    (
+        recommend_tab,
+        compare_tab,
+        hall_tab,
+        surprise_tab,
+        trends_tab,
+        model_tab
+    ) = st.tabs(
+        [
+            "🔍 Find Your Next Read",
+            "⚖️ Compare Genres",
+            "🏆 Hall of Fame",
+            "🎲 Surprise Me",
+            "📈 Reading Trends",
+            "🤖 Predict Popularity"
+        ]
     )
 
-    c1, c2 = st.columns(2)
+    # =========================================================
+    # FIND YOUR NEXT READ
+    # =========================================================
 
-    with c1:
-        rec_genre = st.selectbox(
-            "Choose a genre",
-            options=["Any Genre"] + all_genres
+    with recommend_tab:
+        render_html(
+            '<div class="section-label">Recommendation Explorer</div>'
+            '<div class="section-title">Find Your Next Read</div>'
         )
 
-        min_rating = st.slider(
-            "Minimum rating",
-            0.0,
-            5.0,
-            4.0,
-            0.1
+        c1, c2 = st.columns(2)
+
+        with c1:
+            rec_genre = st.selectbox(
+                "Choose a genre",
+                options=["Any Genre"] + all_genres
+            )
+
+            min_rating = st.slider(
+                "Minimum rating",
+                0.0,
+                5.0,
+                4.0,
+                0.1
+            )
+
+        with c2:
+            min_year = st.slider(
+                "Published after",
+                int(valid_years.min()),
+                int(valid_years.max()),
+                max(int(valid_years.min()), 2000)
+            )
+
+            max_pages = st.slider(
+                "Maximum pages",
+                100,
+                1500,
+                600,
+                50
+            )
+
+        recommendations = filtered_df[
+            (filtered_df["average_rating"] >= min_rating)
+            & (
+                filtered_df["publication_year"].isna()
+                | (filtered_df["publication_year"] >= min_year)
+            )
+            & (
+                filtered_df["number_of_pages"].isna()
+                | (filtered_df["number_of_pages"] <= max_pages)
+            )
+        ].copy()
+
+        if rec_genre != "Any Genre":
+            recommendations = filter_by_genre(
+                recommendations,
+                [rec_genre]
+            )
+
+        recommendations = recommendations.sort_values(
+            by=["average_rating", "rating_count"],
+            ascending=[False, False]
         )
 
-    with c2:
-        min_year = st.slider(
-            "Published after",
-            int(valid_years.min()),
-            int(valid_years.max()),
-            max(int(valid_years.min()), 2000)
+        if recommendations.empty:
+            st.info("No recommendations match those choices.")
+        else:
+            st.success(f"Found {len(recommendations):,} matching books.")
+
+            for _, book in recommendations.head(8).iterrows():
+                show_book_card(book)
+
+    # =========================================================
+    # COMPARE GENRES
+    # =========================================================
+
+    with compare_tab:
+        render_html(
+            '<div class="section-label">Interactive Comparison</div>'
+            '<div class="section-title">Compare Two Genres</div>'
         )
 
-        max_pages = st.slider(
-            "Maximum pages",
-            100,
-            1500,
-            600,
-            50
+        c1, c2 = st.columns(2)
+
+        with c1:
+            genre_one = st.selectbox("First genre", all_genres, index=0)
+
+        with c2:
+            genre_two = st.selectbox(
+                "Second genre",
+                all_genres,
+                index=1 if len(all_genres) > 1 else 0
+            )
+
+        rows = []
+
+        for genre in [genre_one, genre_two]:
+            subset = filter_by_genre(filtered_df, [genre])
+
+            rows.append({
+                "Genre": genre,
+                "Books": len(subset),
+                "Average Rating": subset["average_rating"].mean(),
+                "Average Pages": subset["number_of_pages"].mean(),
+                "Average Reviews": subset["review_count"].mean()
+            })
+
+        comparison_df = pd.DataFrame(rows)
+
+        st.dataframe(
+            comparison_df.round(2),
+            use_container_width=True,
+            hide_index=True
         )
 
-    recommendations = filtered_df[
-        (filtered_df["average_rating"] >= min_rating)
-        & (
-            filtered_df["publication_year"].isna()
-            | (filtered_df["publication_year"] >= min_year)
-        )
-        & (
-            filtered_df["number_of_pages"].isna()
-            | (filtered_df["number_of_pages"] <= max_pages)
-        )
-    ].copy()
-
-    if rec_genre != "Any Genre":
-        recommendations = filter_by_genre(
-            recommendations,
-            [rec_genre]
+        measure = st.selectbox(
+            "Choose a measure",
+            ["Average Rating", "Average Pages", "Average Reviews"]
         )
 
-    recommendations = recommendations.sort_values(
-        by=["average_rating", "rating_count"],
-        ascending=[False, False]
-    )
+        fig = px.bar(
+            comparison_df,
+            x="Genre",
+            y=measure,
+            title=f"{measure}: {genre_one} vs {genre_two}"
+        )
+        st.plotly_chart(style_plotly(fig), use_container_width=True)
 
-    if recommendations.empty:
-        st.info("No recommendations match those choices.")
-    else:
-        st.success(f"Found {len(recommendations):,} matching books.")
+    # =========================================================
+    # HALL OF FAME
+    # =========================================================
 
-        for _, book in recommendations.head(8).iterrows():
+    with hall_tab:
+        render_html(
+            '<div class="section-label">Standout Books</div>'
+            '<div class="section-title">Hall of Fame</div>'
+        )
+
+        reliable = filtered_df[filtered_df["rating_count"] >= 500]
+
+        hidden_candidates = filtered_df[
+            filtered_df["book_category"] == "Hidden Gem"
+        ]
+
+        hall_books = {
+            "👑 Most Popular": filtered_df.loc[
+                filtered_df["rating_count"].idxmax()
+            ],
+            "⭐ Highest Rated": reliable.sort_values(
+                ["average_rating", "rating_count"],
+                ascending=[False, False]
+            ).iloc[0],
+            "📖 Longest Book": filtered_df.dropna(
+                subset=["number_of_pages"]
+            ).sort_values(
+                "number_of_pages",
+                ascending=False
+            ).iloc[0],
+            "📅 Oldest Book": filtered_df.dropna(
+                subset=["publication_year"]
+            ).sort_values(
+                "publication_year"
+            ).iloc[0]
+        }
+
+        if not hidden_candidates.empty:
+            hall_books["💎 Best Hidden Gem"] = hidden_candidates.sort_values(
+                ["average_rating", "rating_count"],
+                ascending=[False, False]
+            ).iloc[0]
+
+        for label, book in hall_books.items():
+            st.markdown(f"### {label}")
             show_book_card(book)
 
+    # =========================================================
+    # SURPRISE ME
+    # =========================================================
 
-# =========================================================
-# COMPARE GENRES
-# =========================================================
-
-elif page == "⚖️ Compare Genres":
-    render_html(
-        '<div class="section-label">Interactive Comparison</div>'
-        '<div class="section-title">Compare Two Genres</div>'
-    )
-
-    c1, c2 = st.columns(2)
-
-    with c1:
-        genre_one = st.selectbox("First genre", all_genres, index=0)
-
-    with c2:
-        genre_two = st.selectbox(
-            "Second genre",
-            all_genres,
-            index=1 if len(all_genres) > 1 else 0
+    with surprise_tab:
+        render_html(
+            '<div class="section-label">Random Discovery</div>'
+            '<div class="section-title">Surprise Me</div>'
         )
 
-    rows = []
+        if "surprise_index" not in st.session_state:
+            st.session_state["surprise_index"] = 0
 
-    for genre in [genre_one, genre_two]:
-        subset = filter_by_genre(filtered_df, [genre])
+        if st.button("🎲 Pick Another Book"):
+            st.session_state["surprise_index"] += 1
 
-        rows.append({
-            "Genre": genre,
-            "Books": len(subset),
-            "Average Rating": subset["average_rating"].mean(),
-            "Average Pages": subset["number_of_pages"].mean(),
-            "Average Reviews": subset["review_count"].mean()
-        })
+        surprise_book = filtered_df.sample(
+            1,
+            random_state=st.session_state["surprise_index"] + 42
+        ).iloc[0]
 
-    comparison_df = pd.DataFrame(rows)
+        show_book_card(surprise_book, featured=True)
 
-    st.dataframe(
-        comparison_df.round(2),
-        use_container_width=True,
-        hide_index=True
-    )
+    # =========================================================
+    # READING TRENDS
+    # =========================================================
 
-    measure = st.selectbox(
-        "Choose a measure",
-        ["Average Rating", "Average Pages", "Average Reviews"]
-    )
+    with trends_tab:
+        render_html(
+            '<div class="section-label">Historical View</div>'
+            '<div class="section-title">Books by Publication Year</div>'
+            '<div class="section-description">'
+            'This chart shows the historical distribution of books in the dataset.'
+            '</div>'
+        )
 
-    fig = px.bar(
-        comparison_df,
-        x="Genre",
-        y=measure,
-        title=f"{measure}: {genre_one} vs {genre_two}"
-    )
-    st.plotly_chart(style_plotly(fig), use_container_width=True)
-
-
-# =========================================================
-# HALL OF FAME
-# =========================================================
-
-elif page == "🏆 Hall of Fame":
-    render_html(
-        '<div class="section-label">Standout Books</div>'
-        '<div class="section-title">Hall of Fame</div>'
-    )
-
-    reliable = filtered_df[filtered_df["rating_count"] >= 500]
-
-    hidden_candidates = filtered_df[
-        filtered_df["book_category"] == "Hidden Gem"
-    ]
-
-    hall_books = {
-        "👑 Most Popular": filtered_df.loc[
-            filtered_df["rating_count"].idxmax()
-        ],
-        "⭐ Highest Rated": reliable.sort_values(
-            ["average_rating", "rating_count"],
-            ascending=[False, False]
-        ).iloc[0],
-        "📖 Longest Book": filtered_df.dropna(
-            subset=["number_of_pages"]
-        ).sort_values(
-            "number_of_pages",
-            ascending=False
-        ).iloc[0],
-        "📅 Oldest Book": filtered_df.dropna(
+        trends_df = filtered_df.dropna(
             subset=["publication_year"]
-        ).sort_values(
-            "publication_year"
-        ).iloc[0]
-    }
+        ).copy()
 
-    if not hidden_candidates.empty:
-        hall_books["💎 Best Hidden Gem"] = hidden_candidates.sort_values(
-            ["average_rating", "rating_count"],
-            ascending=[False, False]
-        ).iloc[0]
+        trends_df = trends_df[
+            trends_df["publication_year"].between(1800, valid_years.max())
+        ]
 
-    for label, book in hall_books.items():
-        st.markdown(f"### {label}")
-        show_book_card(book)
+        yearly_counts = (
+            trends_df.groupby("publication_year")
+            .size()
+            .reset_index(name="Books")
+        )
 
+        fig = px.line(
+            yearly_counts,
+            x="publication_year",
+            y="Books",
+            title="Number of Books by Publication Year",
+            labels={"publication_year": "Publication Year"}
+        )
+        st.plotly_chart(style_plotly(fig), use_container_width=True)
 
-# =========================================================
-# SURPRISE ME
-# =========================================================
+        render_html(
+            '<div class="insight-box">'
+            '<div class="insight-title">Important limitation</div>'
+            'This chart reflects books included in the dataset, not all books '
+            'published worldwide.'
+            '</div>'
+        )
 
-elif page == "🎲 Surprise Me":
-    render_html(
-        '<div class="section-label">Random Discovery</div>'
-        '<div class="section-title">Surprise Me</div>'
-    )
+    # =========================================================
+    # MODEL PAGE
+    # =========================================================
 
-    if "surprise_index" not in st.session_state:
-        st.session_state["surprise_index"] = 0
+    with model_tab:
+        render_html(
+            '<div class="section-label">Optional Machine Learning</div>'
+            '<div class="section-title">Predicting Book Popularity</div>'
+        )
 
-    if st.button("🎲 Pick Another Book"):
-        st.session_state["surprise_index"] += 1
+        st.metric("Model Accuracy", "89.1%")
 
-    surprise_book = filtered_df.sample(
-        1,
-        random_state=st.session_state["surprise_index"] + 42
-    ).iloc[0]
+        st.markdown(
+            """
+    The Logistic Regression model used:
 
-    show_book_card(surprise_book, featured=True)
+    - Average rating
+    - Review count
+    - Number of pages
+    - Publication year
+            """
+        )
 
-
-# =========================================================
-# READING TRENDS
-# =========================================================
-
-elif page == "📈 Reading Trends":
-    render_html(
-        '<div class="section-label">Historical View</div>'
-        '<div class="section-title">Books by Publication Year</div>'
-        '<div class="section-description">'
-        'This chart shows the historical distribution of books in the dataset.'
-        '</div>'
-    )
-
-    trends_df = filtered_df.dropna(
-        subset=["publication_year"]
-    ).copy()
-
-    trends_df = trends_df[
-        trends_df["publication_year"].between(1800, valid_years.max())
-    ]
-
-    yearly_counts = (
-        trends_df.groupby("publication_year")
-        .size()
-        .reset_index(name="Books")
-    )
-
-    fig = px.line(
-        yearly_counts,
-        x="publication_year",
-        y="Books",
-        title="Number of Books by Publication Year",
-        labels={"publication_year": "Publication Year"}
-    )
-    st.plotly_chart(style_plotly(fig), use_container_width=True)
-
-    render_html(
-        '<div class="insight-box">'
-        '<div class="insight-title">Important limitation</div>'
-        'This chart reflects books included in the dataset, not all books '
-        'published worldwide.'
-        '</div>'
-    )
-
-
-# =========================================================
-# MODEL PAGE
-# =========================================================
-
-elif page == "🤖 Predict Popularity":
-    render_html(
-        '<div class="section-label">Optional Machine Learning</div>'
-        '<div class="section-title">Predicting Book Popularity</div>'
-    )
-
-    st.metric("Model Accuracy", "89.1%")
-
-    st.markdown(
-        """
-The Logistic Regression model used:
-
-- Average rating
-- Review count
-- Number of pages
-- Publication year
-        """
-    )
-
-    render_html(
-        '<div class="insight-box">'
-        '<div class="insight-title">Model result</div>'
-        'The model achieved 89.1% accuracy, meaning it correctly classified '
-        'most books as popular or not popular.'
-        '</div>'
-    )
-
+        render_html(
+            '<div class="insight-box">'
+            '<div class="insight-title">Model result</div>'
+            'The model achieved 89.1% accuracy, meaning it correctly classified '
+            'most books as popular or not popular.'
+            '</div>'
+        )
 
 # =========================================================
 # BROWSE
 # =========================================================
 
-elif page == "🔎 Browse Books":
+with browse_tab:
     render_html(
         '<div class="section-label">Search the Collection</div>'
         '<div class="section-title">Browse Books</div>'
@@ -1220,12 +1239,11 @@ elif page == "🔎 Browse Books":
         mime="text/csv"
     )
 
-
 # =========================================================
 # METHOD
 # =========================================================
 
-elif page == "🕯️ Method":
+with method_tab:
     render_html(
         '<div class="section-label">Behind the Dashboard</div>'
         '<div class="section-title">The Method</div>'
@@ -1283,7 +1301,6 @@ elif page == "🕯️ Method":
         "The dataset was last updated several years ago, so the results "
         "should be viewed as a historical snapshot of Goodreads data."
     )
-
 
 # =========================================================
 # FOOTER
