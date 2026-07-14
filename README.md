@@ -1,143 +1,195 @@
-# GoodReads-EDA
 # 📚 Between the Lines
 
-## Goodreads Data Exploration Project
+## Goodreads Data Exploration
 
-Between the Lines is a data analysis and dashboard project that explores Goodreads book data to understand the relationship between book quality, popularity, genres, and reader engagement.
+**Between the Lines** is a data analysis project built using the Goodreads Books dataset. The project explores how book ratings, popularity, genres, and reader engagement relate to each other through data analysis and an interactive Streamlit dashboard.
 
-The main goal of this project is to answer the question:
+The main question explored in this project is:
 
-**Does popularity really mean quality, or are some highly rated books being overlooked?**
+> **Does popularity really mean quality, or are some highly rated books being overlooked?**
 
 ---
+
 ## Live Demo
 
-You can view the interactive Streamlit dashboard here:
+🌐 https://goodreads-eda.streamlit.app/
 
-[Open the Live Dashboard](https://goodreads-eda.streamlit.app/)
-## Project Overview
+---
 
-This project analyzes a Goodreads dataset containing more than 52,000 books. After cleaning the data, the final dataset includes 49,351 books with useful information such as ratings, review counts, genres, page counts, publication years, and custom book categories.
+## Project Objectives
 
-The project includes:
+This project was completed as part of a Data Science and AI bootcamp to practice the full data analysis workflow.
 
-- Data cleaning
-- Exploratory data analysis
-- Data visualization
-- Hidden Gem classification
-- Interactive Streamlit dashboard
-- Final report and presentation
+The project covers:
+
+- Loading and exploring a real-world dataset
+- Cleaning and preparing the data
+- Performing exploratory data analysis (EDA)
+- Creating visualizations to discover patterns
+- Building an interactive Streamlit dashboard
+- Applying a simple machine learning model
 
 ---
 
 ## Dataset
 
-**Dataset Name:** Goodreads Books  
-**Source:** Kaggle  
-**Original Size:** 52,199 rows and 31 columns  
-**Cleaned Size:** 49,351 books
+- **Source:** Goodreads Books Dataset (Kaggle)
+- **Original Size:** 52,199 books
+- **Cleaned Size:** 49,351 books
 
-The dataset includes information about:
+The dataset includes:
 
-- Book title
-- Author
-- Average rating
-- Rating count
-- Review count
+- Book titles
+- Authors
 - Genres
+- Average ratings
+- Rating counts
+- Review counts
 - Number of pages
-- Publication date
-- Star rating counts
-
----
-
-## Main Questions
-
-This project focuses on answering the following questions:
-
-1. What are the main patterns in Goodreads book ratings?
-2. Does popularity lead to higher average ratings?
-3. Which genres are most common?
-4. Do different genres receive different average ratings?
-5. Does book length affect rating?
-6. Which books can be considered Hidden Gems?
+- Publication years
+- Star rating distributions
 
 ---
 
 ## Data Cleaning
 
-The cleaning process included:
+The dataset was cleaned before analysis by:
 
-- Keeping only relevant columns
-- Replacing missing original titles with book titles
-- Removing rows without genre information
-- Cleaning genre values by removing vote numbers
-- Recovering publication years from original date text
+- Selecting only the required columns
+- Handling missing values
+- Removing duplicate records
+- Cleaning genre names
+- Recovering missing publication years when possible
 - Removing books with zero ratings
-- Checking for duplicate records
-- Checking for invalid average ratings
-- Creating a new `book_category` column
+- Converting data types
+- Creating a custom **Book Category** column
+
+---
+
+## Exploratory Data Analysis
+
+The notebook includes:
+
+- Distribution of average ratings
+- Most common genres
+- Distribution of page counts
+- Popularity vs average rating
+- Number of pages vs average rating
+- Correlation heatmap
+- Average rating by genre
+- Book category distribution
+- Boxplots and summary insights
+
+Each visualization includes a short explanation of the findings.
 
 ---
 
 ## Book Categories
 
-Books were classified into five categories using data-based thresholds:
+Books were grouped into five custom categories based on their ratings and popularity.
 
 | Category | Description |
-|---|---|
-| Hidden Gem | Highly rated books with moderate popularity |
-| Popular and Highly Rated | Books with both high ratings and high popularity |
-| Overrated | Highly popular books with lower ratings |
-| Under the Radar | Books with very low rating counts |
-| Typical | Books that do not fall into the other categories |
-
-### Category Counts
-
-| Category | Number of Books |
-|---|---:|
-| Typical | 26,091 |
-| Under the Radar | 12,332 |
-| Popular and Highly Rated | 5,549 |
-| Hidden Gem | 2,966 |
-| Overrated | 2,413 |
+|----------|-------------|
+| 💎 Hidden Gem | Highly rated books with lower popularity |
+| 👑 Popular and Highly Rated | Books with both high ratings and high popularity |
+| 📢 Overrated | Very popular books with relatively lower ratings |
+| 🔍 Under the Radar | Books with very few ratings |
+| 📚 Typical | Books that do not fit the other categories |
 
 ---
 
-## Dashboard Features
+## Predictive Model
 
-The Streamlit dashboard allows users to interact with the cleaned Goodreads dataset.
+As an optional extension, a simple Logistic Regression model was created to predict whether a book is popular.
 
-Dashboard features include:
+Features used:
 
-- Sidebar filters
+- Average Rating
+- Review Count
+- Number of Pages
+- Publication Year
+
+Model accuracy:
+
+**89.1%**
+
+This shows that the selected features can predict book popularity with good accuracy.
+
+---
+
+## Streamlit Dashboard
+
+The dashboard allows users to explore the dataset interactively.
+
+Features include:
+
 - Genre filtering
 - Book category filtering
 - Rating and publication year filters
-- Interactive charts
-- Hidden Gems discovery section
-- Book search feature
-- Filtered data preview
-- Download option for filtered data
+- Interactive Plotly charts
+- Hidden Gems explorer
+- Book search
+- Collection browser
+- Download filtered data
 
 ---
 
-## Files in This Repository
+## Repository Structure
 
-| File | Description |
-|---|---|
-| `app.py` | Streamlit dashboard code |
-| `clean_goodreads_books.csv` | Cleaned dataset used in the dashboard |
-| `requirements.txt` | Required Python libraries |
-| `Between_the_Lines.ipynb` | Colab notebook for cleaning and analysis |
-| `Between_the_Lines_Report.pdf` | Final project report |
-| `Between_the_Lines_Presentation.pptx` | Final presentation |
+```
+GoodReads-EDA/
+│
+├── app.py
+├── clean_goodreads_books.csv
+├── Goodreads_EDA_project.ipynb
+├── requirements.txt
+├── runtime.txt
+└── README.md
+```
 
 ---
 
-## How to Run the Dashboard
+## How to Run
 
-First, install the required libraries:
+1. Clone the repository
+
+```bash
+git clone https://github.com/your-username/GoodReads-EDA.git
+```
+
+2. Install the required libraries
 
 ```bash
 pip install -r requirements.txt
+```
+
+3. Run the dashboard
+
+```bash
+streamlit run app.py
+```
+
+---
+
+## Tools Used
+
+- Python
+- Pandas
+- NumPy
+- Plotly
+- Matplotlib
+- Seaborn
+- Streamlit
+- Scikit-learn
+- Google Colab
+
+---
+
+## Key Findings
+
+- Most Goodreads books are rated close to 4 stars.
+- Popularity does not always mean a higher rating.
+- Book length has only a weak relationship with ratings.
+- Hidden Gems can be identified by combining ratings with popularity.
+- Reader engagement is a strong indicator of whether a book is popular.
+
