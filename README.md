@@ -34,6 +34,7 @@ The project covers:
 ## Dataset
 
 - **Source:** Goodreads Books Dataset (Kaggle)
+ https://www.kaggle.com/datasets/austinreese/goodreads-books
 - **Original Size:** 52,199 books
 - **Cleaned Size:** 49,351 books
 
