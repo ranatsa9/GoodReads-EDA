@@ -409,15 +409,26 @@ genre_counts = (
 
 all_genres = sorted(genre_counts[genre_counts >= 120].index)
 
-genres_to_remove = {
-    "LGBT",
-    "Romance-Erotic Romance",
-    "Romance-M M Romance"
-}
+blocked_keywords = [
+    "erotic",
+    "erotica",
+    "adult",
+    "m m",
+    "lgbt",
+    "gay",
+    "lesbian",
+    "queer",
+    "bdsm",
+    "menage"
+]
 
 all_genres = [
-    genre for genre in all_genres
-    if genre not in genres_to_remove
+    genre
+    for genre in all_genres
+    if not any(
+        word in str(genre).lower()
+        for word in blocked_keywords
+    )
 ]
 
 genre_category_keywords = {
